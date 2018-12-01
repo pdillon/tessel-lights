@@ -1,0 +1,20 @@
+<script src="/socket.io/socket.io.js"></script>
+<script>
+  var socket = io();
+
+  navigator.requestMIDIAccess().then(onMIDISuccess, onMIDIFailure);
+
+  function onMIDISuccess(midiAccess) {
+    for (const input of midiAccess.inputs.values())
+      input.onmidimessage = getMIDIMessage;
+  }
+
+  function getMIDIMessage(midiMessage) {
+    const [command, note, velocity = 0] = midiMessage.data;
+    socket.emit(velocity > 0 && command === 144 ? 'note-on' : 'note-off', note);
+  }
+
+  function onMIDIFailure() {
+    console.log('Could not access your MIDI devices.');
+  }
+</script>
