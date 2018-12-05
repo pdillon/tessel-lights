@@ -5,9 +5,38 @@ const socketIO = require('socket.io');
 const serve = require('koa-static');
 const {promisify} = require('util');
 
-const asyncPinWrites = tessel.port.A.pin.map(p => promisify(p.write.bind(p)));
+const DEFAULT_PORT = 'A';
+const START_PIN = process.env.START_PIN || 2;
 
-const togglePin = async (pinNumber, onOff) => {
+const KEY_MAP = [
+  60, // C
+  62, // D
+  64, // E
+  65, // F
+  67, // G
+  69, // A
+  71
+];
+
+const asyncPinWrites = tessel.port[DEFAULT_PORT].pin.map(p =>
+  promisify(p.write.bind(p))
+);
+
+const mapNoteToPin = note => {
+  const pinIndex = KEY_MAP.indexOf(note);
+  if (pinIndex !== -1) {
+    return START_PIN + pinIndex;
+  } else {
+    return -1;
+  }
+};
+
+const togglePinFromNote = async (note, onOff) => {
+  const pinNumber = mapNoteToPin(note);
+  if (pinNumber === -1) {
+    return;
+  }
+
   await asyncPinWrites[pinNumber](onOff);
 };
 
@@ -18,21 +47,18 @@ const io = socketIO(server);
 io.on('connection', socket => {
   socket
     .on('note-on', async note => {
-      const pin = note - 60 / 2; // Map to whole notes starting at middle C
-      await togglePin(pin, 1);
+      await togglePinFromNote(note, 0);
     })
     .on('note-off', async note => {
-      const pin = note - 60 / 2;
-      await togglePin(pin, 0);
+      await togglePinFromNote(note, 1);
     });
 });
 
 app
   .use(async (ctx, next) => {
     if (ctx.path === '/test-toggle') {
-      const {pin = '0', power = 'on'} = ctx;
-
-      await togglePin(pin, power == 'on' ? 1 : 0);
+      const {pin = '0', power = 'on'} = ctx.query;
+      await asyncPinWrites[pin](power == 'on' ? 1 : 0);
       ctx.body = `Toggled pin ${pin} ${power}`;
       return;
     }
