@@ -12,6 +12,16 @@ class Tessel {
   static async pinWrite({pin, on = true, port = 'A'}) {
     return await asyncPinWrites[port][pin](on);
   }
+
+  /**
+   * Write to all pins for a single port
+   * @param {on: boolean, port: ['A', 'B']} options
+   */
+  static async portWrite({on = true, port = 'A'}) {
+    for (const writeFunc of asyncPinWrites[port]) {
+      await writeFunc(on);
+    }
+  }
 }
 
 module.exports = Tessel;

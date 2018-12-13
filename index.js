@@ -4,15 +4,22 @@ const socketIO = require('socket.io');
 const serve = require('koa-static');
 const {testPinToggle} = require('./middleware');
 const {midi} = require('./socketBindings');
+const Tessel = require('./Tessel');
 
-const app = new Koa();
-const server = http.createServer(app.callback());
-const io = socketIO(server);
+(async function() {
+  // Turn on all pins on start up
+  await Tessel.portWrite({on: true, port: 'A'});
 
-io.on('connection', socket => {
-  midi.bind(socket);
-});
+  const app = new Koa();
+  const server = http.createServer(app.callback());
+  const io = socketIO(server);
 
-app.use(testPinToggle).use(serve(__dirname + '/static'));
+  io.on('connection', socket => {
+    midi.bind(socket);
+  });
 
-server.listen(3000);
+  app.use(testPinToggle).use(serve(__dirname + '/static'));
+
+  await server.listen(3000);
+  console.log('Service started');
+})();
