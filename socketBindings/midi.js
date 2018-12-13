@@ -1,6 +1,6 @@
 const Tessel = require('../Tessel');
 
-const START_PIN = process.env.START_PIN || 2;
+const START_PIN = process.env.START_PIN || 0;
 const MAX_PIN = 7;
 
 const KEY_MAP = [
@@ -16,7 +16,7 @@ const KEY_MAP = [
 
 async function togglePinFromNote(note, on) {
   const pinIndex = KEY_MAP.indexOf(note);
-  if (pinIndex !== -1) {
+  if (pinIndex === -1) {
     console.log(`Pin is not mapped for note ${note}`);
     return;
   }
