@@ -2,7 +2,7 @@ const Koa = require('koa');
 const http = require('http');
 const socketIO = require('socket.io');
 const serve = require('koa-static');
-const {testPinToggle} = require('./middleware');
+const {testPinToggle, cycle} = require('./middleware');
 const {midi} = require('./socketBindings');
 const Tessel = require('./Tessel');
 
@@ -18,7 +18,10 @@ const Tessel = require('./Tessel');
     midi.bind(socket);
   });
 
-  app.use(testPinToggle).use(serve(__dirname + '/static'));
+  app
+    .use(testPinToggle)
+    .use(cycle)
+    .use(serve(__dirname + '/static'));
 
   await server.listen(3000);
   console.log('Service started');
